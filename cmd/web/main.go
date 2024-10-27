@@ -3,7 +3,19 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 )
+
+func neuter(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 func main() {
 	// Router
@@ -13,7 +25,7 @@ func main() {
 
 	// All URL paths that starts with "/static/"
 	// Strip "/static" prefix before the request reachers the file server
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+	mux.Handle("/static/", http.StripPrefix("/static", neuter(fileServer)))
 
 	// Regiter the other applications routes as normal
 	mux.HandleFunc("/", home)
