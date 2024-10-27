@@ -9,6 +9,13 @@ func main() {
 	// Router
 	mux := http.NewServeMux()
 
+	fileServer := http.FileServer(http.Dir("./ui/static/"))
+
+	// All URL paths that starts with "/static/"
+	// Strip "/static" prefix before the request reachers the file server
+	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+
+	// Regiter the other applications routes as normal
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/snippet/view", snippetView)
 	mux.HandleFunc("/snippet/create", snippetCreate)
