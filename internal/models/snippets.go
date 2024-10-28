@@ -28,24 +28,14 @@ func (m *SnippetModel) Latest() ([]*Snippet, error) {
 func (m *SnippetModel) Insert(title, content string, expires int) (int, error) {
 
 	stmt := `INSERT INTO snippets (title, content, created_at, expires) 
-	VALUES ($1, $2,  NOW(), NOW() + INTERVAL '$3 days')`
+	VALUES ($1, $2,  NOW(), NOW() + ($3 * INTERVAL '1 day')) RETURNING id`
 
-	// Use the Exec() method on the embedded connection pool to execute the
-	// statement. The first parameter is the SQL statement, followed by the
-	// title, content and expiry values for the placeholder parameters. This
-	// method returns a sql.Result type, which contains some basic
-	// information about what happened when the statement was executed.
-	result, err := m.DB.Exec(stmt, title, content, expires)
+	latestID := 0
+	err := m.DB.QueryRow(stmt, title, content, expires).Scan(&latestID)
 
 	if err != nil {
 		return 0, err
 	}
 
-	rows, err := result.RowsAffected()
-
-	if err != nil {
-		return 0, nil
-	}
-
-	return int(rows), nil
+	return int(latestID), nil
 }

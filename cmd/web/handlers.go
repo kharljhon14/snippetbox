@@ -62,7 +62,8 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public max-age-31536000")
 	w.Header().Set("Content-Type", "application/json")
 	w.Header()["X-XSS-Protection"] = []string{"1; mode=block"}
-	w.Header()["Date"] = nil
+
+	// w.Header()["Date"] = nil
 	// In contrast, the Add() method appends a new "Cache-Control" header and can
 	// be called multiple times.
 	//* w.Header().Add("Cache-Control", "public")
@@ -81,5 +82,15 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(`{"name": "Kharl"}`))
+	title := "0 Snail"
+	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+	expires := 7
+
+	id, err := app.snippets.Insert(title, content, expires)
+
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
 }
