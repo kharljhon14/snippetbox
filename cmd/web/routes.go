@@ -16,7 +16,7 @@ func neuter(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) routes() *http.ServeMux {
+func (app *Application) routes() *http.ServeMux {
 	// Router
 	mux := http.NewServeMux()
 

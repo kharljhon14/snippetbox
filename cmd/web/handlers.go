@@ -11,7 +11,7 @@ import (
 )
 
 // Controllers
-func (app *application) home(w http.ResponseWriter, r *http.Request) {
+func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the current URL path exactly matches "/"
 	// If it doesn't use the http.NotFound() to send a 404
@@ -57,7 +57,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
+func (app *Application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 
 	if err != nil {
@@ -90,7 +90,11 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.ExecuteTemplate(w, "base", snippet)
+	data := &TemplateData{
+		Snippet: snippet,
+	}
+
+	err = ts.ExecuteTemplate(w, "base", data)
 
 	if err != nil {
 		app.serverError(w, err)
@@ -98,7 +102,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
+func (app *Application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 
 	// Set will overwrite if the header already exists
 	w.Header().Set("Cache-Control", "public max-age-31536000")

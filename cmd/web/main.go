@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type application struct {
+type Application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
 	snippets *models.SnippetModel
@@ -38,7 +38,7 @@ func main() {
 
 	defer db.Close()
 
-	app := &application{
+	app := &Application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
 		snippets: &models.SnippetModel{DB: db},
