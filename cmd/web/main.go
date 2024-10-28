@@ -25,17 +25,18 @@ func neuter(next http.Handler) http.Handler {
 }
 
 func main() {
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
-	app := &application{errorLog: errorLog, infoLog: infoLog}
-
-	// Router
-	mux := http.NewServeMux()
-
 	defaultAddr := os.Getenv("ADDR")
 
 	addr := flag.String("addr", defaultAddr, "HTTP network address")
 	flag.Parse()
+
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	app := &application{errorLog: errorLog, infoLog: infoLog}
+
+	// Router
+	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 
@@ -51,15 +52,10 @@ func main() {
 
 	defer f.Close()
 
-	// Regiter the other applications routes as normal
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet/view", app.snippetView)
-	mux.HandleFunc("/snippet/create", app.snippetCreate)
-
 	srv := &http.Server{
 		Addr:     *addr,
 		ErrorLog: errorLog,
-		Handler:  mux,
+		Handler:  app.routes(),
 	}
 
 	// The value returned from the flag.String() function is a pointer to the flag
