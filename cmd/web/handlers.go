@@ -2,20 +2,19 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"text/template"
 )
 
 // Controllers
-func home(w http.ResponseWriter, r *http.Request) {
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the current URL path exactly matches "/"
 	// If it doesn't use the http.NotFound() to send a 404
 
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 
@@ -28,8 +27,8 @@ func home(w http.ResponseWriter, r *http.Request) {
 	ts, err := template.ParseFiles(file...)
 
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		app.errorLog.Println(err.Error())
+		app.serverError(w, err)
 		return
 	}
 
@@ -38,18 +37,18 @@ func home(w http.ResponseWriter, r *http.Request) {
 	err = ts.ExecuteTemplate(w, "base", nil)
 
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		app.errorLog.Panicln(err.Error())
+		app.serverError(w, err)
 	}
 
 }
 
-func snippetView(w http.ResponseWriter, r *http.Request) {
+func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 
 	if err != nil {
-		http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 
@@ -57,7 +56,7 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func snippetCreate(w http.ResponseWriter, r *http.Request) {
+func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 
 	// Set will overwrite if the header already exists
 	w.Header().Set("Cache-Control", "public max-age-31536000")
@@ -70,7 +69,7 @@ func snippetCreate(w http.ResponseWriter, r *http.Request) {
 	//* w.Header().Add("Cache-Control", "max-age=31536000")
 
 	// The r.Method will check if the request type is using POST
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		// w.WriteHeader() method will send a 405 status
 		// w.Write() method to write a "Method Not Allowed"
 
@@ -78,7 +77,7 @@ func snippetCreate(w http.ResponseWriter, r *http.Request) {
 		// w.WriteHeader(405)
 		// w.Write([]byte("Method Not Allowed"))
 
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
 

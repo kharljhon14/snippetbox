@@ -4,8 +4,14 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
+
+type application struct {
+	errorLog *log.Logger
+	infoLog  *log.Logger
+}
 
 func neuter(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -19,10 +25,16 @@ func neuter(next http.Handler) http.Handler {
 }
 
 func main() {
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	app := &application{errorLog: errorLog, infoLog: infoLog}
+
 	// Router
 	mux := http.NewServeMux()
 
-	addr := flag.String("addr", ":8000", "HTTP network address")
+	defaultAddr := os.Getenv("ADDR")
+
+	addr := flag.String("addr", defaultAddr, "HTTP network address")
 	flag.Parse()
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
@@ -31,17 +43,31 @@ func main() {
 	// Strip "/static" prefix before the request reachers the file server
 	mux.Handle("/static/", http.StripPrefix("/static", neuter(fileServer)))
 
+	f, err := os.OpenFile("./tmp/info.log", os.O_RDWR|os.O_CREATE, 0666)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
 	// Regiter the other applications routes as normal
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/snippet/view", snippetView)
-	mux.HandleFunc("/snippet/create", snippetCreate)
+	mux.HandleFunc("/", app.home)
+	mux.HandleFunc("/snippet/view", app.snippetView)
+	mux.HandleFunc("/snippet/create", app.snippetCreate)
+
+	srv := &http.Server{
+		Addr:     *addr,
+		ErrorLog: errorLog,
+		Handler:  mux,
+	}
 
 	// The value returned from the flag.String() function is a pointer to the flag
 	// value, not the value itself. So we need to dereference the pointer (i.e.
 	// prefix it with the * symbol) before using it. Note that we're using the
 	// log.Printf() function to interpolate the address with the log message.
-	log.Printf("Starting server on %s", *addr)
-	err := http.ListenAndServe(*addr, mux)
+	infoLog.Printf("Starting server on %s", *addr)
+	err = srv.ListenAndServe()
 
-	log.Fatal(err)
+	errorLog.Fatal(err)
 }
