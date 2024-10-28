@@ -7,12 +7,14 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/kharljhon14/snippetbox/internal/models"
 	_ "github.com/lib/pq"
 )
 
 type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
+	snippets *models.SnippetModel
 }
 
 func main() {
@@ -36,7 +38,11 @@ func main() {
 
 	defer db.Close()
 
-	app := &application{errorLog: errorLog, infoLog: infoLog}
+	app := &application{
+		errorLog: errorLog,
+		infoLog:  infoLog,
+		snippets: &models.SnippetModel{DB: db},
+	}
 
 	srv := &http.Server{
 		Addr:     *addr,
