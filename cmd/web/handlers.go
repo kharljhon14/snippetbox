@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"text/template"
 
 	"github.com/kharljhon14/snippetbox/internal/models"
 )
@@ -21,28 +20,39 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file := []string{
-		"./ui/html/base.tmpl.html",
-		"./ui/html/partials/nav.tmpl.html",
-		"./ui/html/pages/home.tmpl.html",
-	}
-
-	ts, err := template.ParseFiles(file...)
+	snippets, err := app.snippets.Latest()
 
 	if err != nil {
-		app.errorLog.Println(err.Error())
 		app.serverError(w, err)
 		return
 	}
 
+	for _, snippet := range snippets {
+		fmt.Fprintf(w, "%+v\n", snippet)
+	}
+
+	// file := []string{
+	// 	"./ui/html/base.tmpl.html",
+	// 	"./ui/html/partials/nav.tmpl.html",
+	// 	"./ui/html/pages/home.tmpl.html",
+	// }
+
+	// ts, err := template.ParseFiles(file...)
+
+	// if err != nil {
+	// 	app.errorLog.Println(err.Error())
+	// 	app.serverError(w, err)
+	// 	return
+	// }
+
 	// err = ts.Execute(w, nil)
 
-	err = ts.ExecuteTemplate(w, "base", nil)
+	// err = ts.ExecuteTemplate(w, "base", nil)
 
-	if err != nil {
-		app.errorLog.Panicln(err.Error())
-		app.serverError(w, err)
-	}
+	// if err != nil {
+	// 	app.errorLog.Panicln(err.Error())
+	// 	app.serverError(w, err)
+	// }
 
 }
 

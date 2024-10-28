@@ -44,8 +44,40 @@ func (m *SnippetModel) Get(id int) (*Snippet, error) {
 }
 
 func (m *SnippetModel) Latest() ([]*Snippet, error) {
+	stmt := `SELECT * FROM snippets WHERE expires > NOW() ORDER BY id DESC LIMIT 10`
 
-	return nil, nil
+	rows, err := m.DB.Query(stmt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// We defer rows.Close() to ensure the sql.Rows resultset is
+	// always properly closed before the Latest() method returns. This defer
+	// statement should come *after* you check for an error from the Query()
+	// method. Otherwise, if Query() returns an error, you'll get a panic
+	// trying to close a nil resultset.
+	defer rows.Close()
+
+	snippets := []*Snippet{}
+
+	for rows.Next() {
+		s := &Snippet{}
+
+		err = rows.Scan(&s.ID, &s.Title, &s.Content, &s.CreatedAt, &s.Expires)
+
+		if err != nil {
+			return nil, err
+		}
+
+		snippets = append(snippets, s)
+
+		if err = rows.Err(); err != nil {
+			return nil, err
+		}
+	}
+
+	return snippets, nil
 }
 
 func (m *SnippetModel) Insert(title, content string, expires int) (int, error) {
