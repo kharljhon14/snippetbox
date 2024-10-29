@@ -12,7 +12,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type Application struct {
+type application struct {
 	errorLog      *log.Logger
 	infoLog       *log.Logger
 	snippets      *models.SnippetModel
@@ -46,7 +46,7 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
-	app := &Application{
+	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		snippets:      &models.SnippetModel{DB: db},
