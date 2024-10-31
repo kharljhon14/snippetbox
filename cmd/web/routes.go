@@ -16,7 +16,7 @@ func neuter(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
 	// Router
 	mux := http.NewServeMux()
 
@@ -29,5 +29,5 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/snippet/view", app.snippetView)
 	mux.HandleFunc("/snippet/create", app.snippetCreate)
 
-	return mux
+	return secureHeaders(mux)
 }
