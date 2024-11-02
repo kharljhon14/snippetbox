@@ -2,36 +2,38 @@ package main
 
 import (
 	"net/http"
-	"strings"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
 )
 
-func neuter(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/") {
-			http.NotFound(w, r)
-			return
-		}
+// func neuter(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		if strings.HasPrefix(r.URL.Path, "/") {
+// 			http.NotFound(w, r)
+// 			return
+// 		}
 
-		next.ServeHTTP(w, r)
-	})
-}
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
 
 func (app *application) routes() http.Handler {
 	// Router
-	mux := http.NewServeMux()
+	// mux := http.NewServeMux()
+	router := httprouter.New()
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 	// All URL paths that starts with "/static/"
 	// Strip "/static" prefix before the request reachers the file server
-	mux.Handle("/static/", http.StripPrefix("/static", neuter(fileServer)))
+	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
 
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet/view", app.snippetView)
-	mux.HandleFunc("/snippet/create", app.snippetCreate)
+	router.HandlerFunc(http.MethodGet, "/", app.home)
+	router.HandlerFunc(http.MethodGet, "/snippet/view/:id", app.snippetView)
+	router.HandlerFunc(http.MethodGet, "/snippet/create", app.snippetCreate)
+	router.HandlerFunc(http.MethodPost, "/snippet/create", app.snippetCreatePost)
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
-	return standard.Then(mux)
+	return standard.Then(router)
 }
