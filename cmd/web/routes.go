@@ -23,6 +23,14 @@ func (app *application) routes() http.Handler {
 	// mux := http.NewServeMux()
 	router := httprouter.New()
 
+	router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		app.notFound(w)
+	})
+
+	router.MethodNotAllowed = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		app.clientError(w, http.StatusMethodNotAllowed)
+	})
+
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 	// All URL paths that starts with "/static/"
 	// Strip "/static" prefix before the request reachers the file server
