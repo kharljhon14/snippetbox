@@ -20,8 +20,6 @@ type SnippetModel struct {
 	DB *sql.DB
 }
 
-var ErrNoRecord = errors.New("models: no matching record found")
-
 func (m *SnippetModel) Get(id int) (*Snippet, error) {
 	stmt := `SELECT * FROM snippets WHERE expires > NOW() AND id = $1`
 
