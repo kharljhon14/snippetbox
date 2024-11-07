@@ -40,6 +40,7 @@ func (app *application) routes() http.Handler {
 	// dynamic application routes. For now, this chain will only contain the
 	// LoadAndSave session middleware but we'll add more to it later.
 	dynamic := alice.New(app.sessionManager.LoadAndSave)
+
 	// Update these routes to use the new dynamic middleware chain followed by
 	// the appropriate handler function. Note that because the alice ThenFunc()
 	// method returns a http.Handler (rather than a http.HandlerFunc) we also
@@ -49,12 +50,14 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodGet, "/snippet/create", dynamic.ThenFunc(app.snippetCreate))
 	router.Handler(http.MethodPost, "/snippet/create", dynamic.ThenFunc(app.snippetCreatePost))
 
+	protected := dynamic.Append(app.requireAuthentication)
+
 	// Auth
-	router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(app.userSignup))
-	router.Handler(http.MethodPost, "/user/signup", dynamic.ThenFunc(app.userSignupPost))
-	router.Handler(http.MethodGet, "/user/login", dynamic.ThenFunc(app.userLogin))
-	router.Handler(http.MethodPost, "/user/login", dynamic.ThenFunc(app.userLoginPost))
-	router.Handler(http.MethodPost, "/user/logout", dynamic.ThenFunc(app.userLogoutPost))
+	router.Handler(http.MethodGet, "/user/signup", protected.ThenFunc(app.userSignup))
+	router.Handler(http.MethodPost, "/user/signup", protected.ThenFunc(app.userSignupPost))
+	router.Handler(http.MethodGet, "/user/login", protected.ThenFunc(app.userLogin))
+	router.Handler(http.MethodPost, "/user/login", protected.ThenFunc(app.userLoginPost))
+	router.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.userLogoutPost))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
