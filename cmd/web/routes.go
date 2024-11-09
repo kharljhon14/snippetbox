@@ -39,25 +39,25 @@ func (app *application) routes() http.Handler {
 	// Create a new middleware chain containing the middleware specific to our
 	// dynamic application routes. For now, this chain will only contain the
 	// LoadAndSave session middleware but we'll add more to it later.
-	dynamic := alice.New(app.sessionManager.LoadAndSave)
+	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf)
+
+	// Auth
+	router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(app.userSignup))
+	router.Handler(http.MethodPost, "/user/signup", dynamic.ThenFunc(app.userSignupPost))
+	router.Handler(http.MethodGet, "/user/login", dynamic.ThenFunc(app.userLogin))
+	router.Handler(http.MethodPost, "/user/login", dynamic.ThenFunc(app.userLoginPost))
+	router.Handler(http.MethodPost, "/user/logout", dynamic.ThenFunc(app.userLogoutPost))
+
+	protected := dynamic.Append(app.requireAuthentication)
 
 	// Update these routes to use the new dynamic middleware chain followed by
 	// the appropriate handler function. Note that because the alice ThenFunc()
 	// method returns a http.Handler (rather than a http.HandlerFunc) we also
 	// need to switch to registering the route using the router.Handler() method.
-	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home))
-	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(app.snippetView))
-	router.Handler(http.MethodGet, "/snippet/create", dynamic.ThenFunc(app.snippetCreate))
-	router.Handler(http.MethodPost, "/snippet/create", dynamic.ThenFunc(app.snippetCreatePost))
-
-	protected := dynamic.Append(app.requireAuthentication)
-
-	// Auth
-	router.Handler(http.MethodGet, "/user/signup", protected.ThenFunc(app.userSignup))
-	router.Handler(http.MethodPost, "/user/signup", protected.ThenFunc(app.userSignupPost))
-	router.Handler(http.MethodGet, "/user/login", protected.ThenFunc(app.userLogin))
-	router.Handler(http.MethodPost, "/user/login", protected.ThenFunc(app.userLoginPost))
-	router.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.userLogoutPost))
+	router.Handler(http.MethodGet, "/", protected.ThenFunc(app.home))
+	router.Handler(http.MethodGet, "/snippet/view/:id", protected.ThenFunc(app.snippetView))
+	router.Handler(http.MethodGet, "/snippet/create", protected.ThenFunc(app.snippetCreate))
+	router.Handler(http.MethodPost, "/snippet/create", protected.ThenFunc(app.snippetCreatePost))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
