@@ -5,6 +5,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
+	"github.com/kharljhon14/snippetbox/ui"
 )
 
 // func neuter(next http.Handler) http.Handler {
@@ -31,10 +32,10 @@ func (app *application) routes() http.Handler {
 		app.clientError(w, http.StatusMethodNotAllowed)
 	})
 
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	fileServer := http.FileServer(http.FS(ui.Files))
 	// All URL paths that starts with "/static/"
 	// Strip "/static" prefix before the request reachers the file server
-	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
+	router.Handler(http.MethodGet, "/static/*filepath", fileServer)
 
 	// Create a new middleware chain containing the middleware specific to our
 	// dynamic application routes. For now, this chain will only contain the
