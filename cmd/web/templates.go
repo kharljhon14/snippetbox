@@ -23,7 +23,14 @@ type templateData struct {
 }
 
 func humanDate(timeString string) string {
-	t, _ := time.Parse("2006-01-02T15:04:05.999999Z", timeString)
+	if timeString == "" {
+		return ""
+	}
+
+	t, err := time.Parse("2006-01-02T15:04:05.999999Z", timeString)
+	if err != nil {
+		return "Invalid date format"
+	}
 
 	return t.Format("02 Jan 2006 at 15:04")
 }
